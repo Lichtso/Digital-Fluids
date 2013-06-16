@@ -1,0 +1,10 @@
+precision highp float;
+
+attribute vec2 vertex;
+uniform mat3 transform;
+varying vec2 uv;
+
+void main() {
+    uv = vertex.xy*0.5+0.5;
+    gl_Position = vec4((transform*vec3(vertex, 1.0)).xy, 0.0, 1.0);
+}

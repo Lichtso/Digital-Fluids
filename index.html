@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <script type="text/javascript" src="js/webGL.js"></script>
+        <script type="text/javascript" src="js/controls.js"></script>
+        <script type="text/javascript" src="js/tick.js"></script>
+    </head>
+    <body onload="init();" style="padding: 0px; margin: 0px;">
+        <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
+        <div id="controlsDiv" style="position: absolute; top: 10px; left: 10px; border: 1px solid black; background: white; padding: 5px; display: block;">
+        	<table>
+                <tr><th>Fluid</th></tr>
+        		<tr>
+        			<td>Momentum</td>
+        			<td><input id="momentum" type="range" min="0.1" max="2.0" step="0.1" value="1.0" onchange="momentum = this.value;"/></td>
+        		</tr>
+        		<tr>
+        			<td>Kinetic Damping</td>
+        			<td><input id="kineticDamping" type="range" min="0.95" max="1.0" step="0.005" value="1.0" onchange="kineticDamping = this.value;"/></td>
+        		</tr>
+                <tr>
+                    <td>Pressure Damping</td>
+                    <td><input id="pressureDamping" type="range" min="0.25" max="1.0" step="0.01" value="0.5" onchange="pressureDamping = this.value;"/></td>
+                </tr>
+        		<tr>
+        			<td>Iterations</td>
+        			<td><input id="iterations" type="range" min="1" max="32" step="1" value="16" onchange="iterations = this.value;"/></td>
+        		</tr>
+        		<tr>
+        			<td>Resolution</td>
+        			<td><input id="resolution" type="range" min="0.125" max="2.0" step="0.125" value="1.0" onchange="resolution = this.value; resizeCanvas();"/></td>
+        		</tr>
+                <tr>
+                    <th>Visualizer</th></tr>
+                <tr>
+                    <td>Impulse</td>
+                    <td><input id="showImpulse" type="checkbox" checked onchange="showImpulse = this.checked;"/></td>
+                </tr>
+                <tr>
+                    <td>Density</td>
+                    <td><input id="showDensity" type="checkbox" checked onchange="showDensity = this.checked;"/></td>
+                </tr>
+                <tr>
+                    <th>Object</th>
+                    <td>
+                        <input id="spawnObject" type="button" onclick="spawnObject();" value="Create"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Type</td>
+                    <td><select id="objectType" onchange="setObjectType(this);">
+                        <option value="rect" selected>Rect</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="circle">Circle</option>
+                        <option value="gradient">Gradient</option>
+                        <option value="radial">Radial</option>
+                    </select></td>
+                </tr>
+                <tr>
+                    <td>Frequence</td>
+                    <td><input id="objectFreq" type="range" min="0.0" max="0.02" step="0.0001" value="0.0" onchange="setObjectFreq(this);"/></td>
+                </tr>
+                <tr>
+                    <td>Mode</td>
+                    <td><select id="controlsMode" onchange="controlsMode = this.value;" disabled>
+                        <option value="none" selected>None</option>
+                        <option value="position">Position</option>
+                        <option value="rotation">Rotation</option>
+                        <option value="size">Size</option>
+                        <option value="force">Force</option>
+                        <option value="stir">Stir</option>
+                    </select></td>
+                </tr>
+        	</table>
+            <input type="button" onclick="this.parentNode.style.display = 'none';" value="Close"/>
+        </div>
+    </body>
+</html>
