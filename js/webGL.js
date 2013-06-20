@@ -2,10 +2,10 @@ var canvas, gl, FBO, shaderPrograms = {}, vertexArrays = {},
     frontBuffer = false, identityMatrix3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 
 function resizeCanvas() {
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    FBO.width = canvas.width*resolution;
-    FBO.height = canvas.height*resolution;
+    canvas.width = document.body.clientWidth;
+    canvas.height = document.body.clientHeight;
+    FBO.width = canvas.width*controls.resolution.value;
+    FBO.height = canvas.height*controls.resolution.value;
     for(var i in FBO.colorBuffers) {
         var colorBuffer = FBO.colorBuffers[i];
         gl.bindTexture(gl.TEXTURE_2D, colorBuffer);
@@ -77,7 +77,8 @@ function init() {
         'density': {'shaders': ['kernel.vertex', 'density.frag'], 'attributes': ['vertex']},
         'diffusion': {'shaders': ['kernel.vertex', 'diffusion.frag'], 'attributes': ['vertex']},
         'visualize': {'shaders': ['kernel.vertex', 'visualize.frag'], 'attributes': ['vertex']},
-        'monochrome': {'shaders': ['kernel.vertex', 'monochrome.frag'], 'attributes': ['vertex']}
+        'monochrome': {'shaders': ['kernel.vertex', 'monochrome.frag'], 'attributes': ['vertex']},
+        'textured': {'shaders': ['kernel.vertex', 'textured.frag'], 'attributes': ['vertex']}
     };
 
     function loadShader() {
@@ -142,6 +143,15 @@ function init() {
         };
         request.send();
     }
+}
+
+function clearBuffers() {
+    gl.viewport(0, 0, FBO.width, FBO.height);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, FBO);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, FBO.colorBuffers['impulseA'], 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, FBO.colorBuffers['densityA'], 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
 function drawPolygon(programName, sources, target, uniforms, blending, form, drawType) {

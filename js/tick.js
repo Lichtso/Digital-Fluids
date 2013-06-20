@@ -14,7 +14,7 @@ function transformationOf(rotation, size, position) {
         aspect = canvas.width/canvas.height;
     return [size[0]*cos, -size[0]*sin*aspect, 0,
             size[1]*sin, size[1]*cos*aspect, 0,
-            position[0], position[1], 1];
+            position[0], position[1]*aspect, 1];
 }
 
 function drawArrow(transform) {
@@ -24,14 +24,14 @@ function drawArrow(transform) {
                 }, null, 'triangle', gl.LINE_STRIP);
 }
 
-function tick(currentTime) {
-    if(controlsMode == 'stir')
+function tick() {
+    if(controls.mode.value == 'stir')
         canvas.onmousemove();
 
     drawPolygon('advect', ['impulseA', 'impulseA'], 'impulseB', {
         'transform': {'type': 'mat3', 'value': identityMatrix3},
-        'pixelSize': {'type': 'vec2', 'value': [momentum/FBO.width, momentum/FBO.height]},
-        'factor': {'type': 'float', 'value': kineticDamping}
+        'pixelSize': {'type': 'vec2', 'value': [controls.momentum.value/FBO.width, controls.momentum.value/FBO.height]},
+        'factor': {'type': 'float', 'value': controls.kineticDamping.value}
     });
 
     drawPolygon('monochrome', [], 'impulseB', {
@@ -39,18 +39,33 @@ function tick(currentTime) {
         'color': {'type': 'vec3', 'value': [0.0, 0.0, 0.0]}
     }, null, 'rect', gl.LINE_LOOP);
 
+    var currentTime = new Date();
     for(var i = 0; i < objects.length; i ++) {
         var forceScale = (objects[i].forceFreq == 0) ? 1.0 : Math.cos(currentTime*objects[i].forceFreq);
         switch(objects[i].type) {
+            case 'textured':
+                gl.activeTexture(gl.TEXTURE0);
+                if(objects[i].url) {
+                    gl.bindTexture(gl.TEXTURE_2D, 0);
+                    objects[i].texture = new Image();
+                    /*objects[i].texture.onload = function() {
+
+                    };*/
+                    objects[i].texture.url = objects[i].url;
+                    delete objects[i].url;
+                }else
+                    gl.bindTexture(gl.TEXTURE_2D, objects[i].texture);
             case 'rect':
             case 'triangle':
             case 'circle':
-                drawPolygon('monochrome', [], 'impulseB', {
+                drawPolygon((objects[i].type == 'textured') ? 'textured' : 'monochrome', [], 'impulseB', {
                     'transform': {'type': 'mat3', 'value': transformationOf(objects[i].rotation, objects[i].size, objects[i].position)},
                     'color': {'type': 'vec3', 'value': [objects[i].force[0]*forceScale, objects[i].force[1]*forceScale, 0.0]}
-                }, (objects[i].force[0] != 0.0 || objects[i].force[1] != 0.0) ? 'add' : null, objects[i].type);
+                }, (objects[i].force[0] != 0.0 || objects[i].force[1] != 0.0) ? 'add' : null,
+                    (objects[i].type == 'textured') ? 'rect' : objects[i].type);
             break;
-            case 'gradient':
+            case 'cone':
+                forceScale *= 10;
                 drawPolygon('circularForce', [], 'impulseB', {
                     'transform': {'type': 'mat3', 'value': transformationOf(objects[i].rotation, objects[i].size, objects[i].position)},
                     'force': {'type': 'vec2', 'value': [objects[i].force[0]*forceScale, objects[i].force[1]*forceScale]}
@@ -70,7 +85,7 @@ function tick(currentTime) {
         'transform': {'type': 'mat3', 'value': identityMatrix3}
     });
     
-    for(var i = 0; i < iterations; i ++) {
+    for(var i = 0; i < controls.iterations.value; i ++) {
         diffusionBuffer = (i%2 == 0) ? 'densityB' : 'densityA';
         drawPolygon('density', [(i%2 == 0) ? 'densityA' : 'densityB', 'pressure'],
             diffusionBuffer, {
@@ -80,29 +95,34 @@ function tick(currentTime) {
 
     drawPolygon('diffusion', [diffusionBuffer, 'impulseB'], 'impulseA', {
         'transform': {'type': 'mat3', 'value': identityMatrix3},
-        'factor': {'type': 'float', 'value': pressureDamping}
+        'factor': {'type': 'float', 'value': controls.pressureDamping.value}
     });
 
-    drawPolygon('visualize', [(showImpulse) ? 'impulseA' : null, (showDensity) ? diffusionBuffer : null], null, {
+    drawPolygon('visualize', [(controls.showImpulse.checked) ? 'impulseA' : null,
+                        (controls.showDensity.checked) ? diffusionBuffer : null], null, {
         'transform': {'type': 'mat3', 'value': identityMatrix3}
     });
 
-    for(var i = 0; i < objects.length; i ++) {
+    for(var i = 0; i < objects.length; i ++)
         switch(objects[i].type) {
+            case 'textured':
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, objects[i].texture);
             case 'rect':
             case 'triangle':
             case 'circle':
-                drawPolygon('monochrome', [], null, {
+                drawPolygon((objects[i].type == 'textured') ? 'textured' : 'monochrome', [], null, {
                     'transform': {'type': 'mat3', 'value': transformationOf(objects[i].rotation,
                         objects[i].size, objects[i].position)},
                     'color': {'type': 'vec3', 'value': [1.0, 1.0, 1.0]}
-                }, null, objects[i].type, gl.LINE_LOOP);
+                }, 'blend', (objects[i].type == 'textured') ? 'rect' : objects[i].type,
+                (objects[i].type == 'textured') ? null : gl.LINE_LOOP);
 
-            case 'gradient':
+            case 'cone':
                 if(objects[i].force[0] != 0.0 || objects[i].force[1] != 0.0)
                     drawArrow(transformationOf(Math.atan2(objects[i].force[0], objects[i].force[1]),
                         [0.05, 0.05], objects[i].position));
-                if(objects[i].type != 'gradient') break;
+                if(objects[i].type != 'cone') break;
 
             case 'radial':
                 drawPolygon('monochrome', [], null, {
@@ -110,7 +130,7 @@ function tick(currentTime) {
                         objects[i].size, objects[i].position)},
                     'color': {'type': 'vec3', 'value': [1.0, 1.0, 1.0]}
                 }, null, 'circle', gl.LINE_LOOP);
-                if(objects[i].type == 'gradient') break;
+                if(objects[i].type == 'cone') break;
 
                 var sin = Math.sin(objects[i].rotation), cos = Math.cos(objects[i].rotation),
                     rot = Math.atan2(objects[i].force[0], objects[i].force[1])+objects[i].rotation;
@@ -123,7 +143,6 @@ function tick(currentTime) {
                 }
             break;
         }
-    }
 
     prevMousePos = mousePos;
     window.requestAnimationFrame(tick);
