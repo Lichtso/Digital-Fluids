@@ -1,7 +1,7 @@
 var controls = { }, grabbedObject, mousePos = [0, 0], prevMousePos, objects = [];
 
 function getMousePosition(event) {
-    mousePos = [event.pageX/canvas.width*2.0-1.0, 1.0-event.pageY/canvas.height*2.0];
+    mousePos = [event.pageX/canvas.width*2.0-1.0, (1.0-event.pageY/canvas.height*2.0)*canvas.height/canvas.width];
 }
 
 function selectObject(object) {
@@ -169,7 +169,6 @@ function initControls() {
             grabbedObject.force = [(mousePos[0]-prevMousePos[0])*100, (mousePos[1]-prevMousePos[1])*100];
             case 'position':
             grabbedObject.position = mousePos;
-            grabbedObject.position[1] *= canvas.height/canvas.width;
             break;
             case 'rotation':
             grabbedObject.rotation = Math.atan2(mousePos[0]-grabbedObject.position[0], mousePos[1]-grabbedObject.position[1]);

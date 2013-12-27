@@ -139,7 +139,7 @@ function tick() {
                         posY = Math.cos(a)*objects[i].size[1];
                     drawArrow(transformationOf(rot+a,
                         [0.01, 0.01], [objects[i].position[0]+posX*cos+posY*sin,
-                        objects[i].position[1]+(posY*cos-posX*sin)*canvas.width/canvas.height]));
+                        objects[i].position[1]+(posY*cos-posX*sin)]));
                 }
             break;
         }
